@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+[x-cloak] { display: none !important; }
+
+@layer components {
+    .field { @apply min-h-13 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100; }
+    .label { @apply mb-2 block text-sm font-bold text-slate-700; }
+    .btn-primary { @apply inline-flex min-h-13 items-center justify-center rounded-xl bg-blue-700 px-5 py-3 font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200; }
+    .btn-ghost { @apply inline-flex min-h-13 items-center justify-center rounded-xl bg-white px-5 py-3 font-bold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50; }
+    .btn-danger { @apply inline-flex min-h-13 items-center justify-center rounded-xl bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700; }
+    .stepper { @apply grid min-h-13 min-w-12 place-items-center rounded-xl bg-slate-200 text-2xl font-black active:bg-slate-300; }
+    .status-option { @apply flex min-h-20 cursor-pointer items-center gap-4 rounded-2xl border-2 border-slate-200 p-4 transition; }
+    .active-installed { @apply border-emerald-500 bg-emerald-50; }
+    .active-blocked { @apply border-amber-500 bg-amber-50; }
+    .photo-field { @apply block rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4; }
+    .nav-pill { @apply whitespace-nowrap rounded-full bg-white px-4 py-2 font-bold text-slate-600 ring-1 ring-slate-200; }
+    .nav-pill.active { @apply bg-blue-700 text-white ring-blue-700; }
+    .section-title { @apply text-xl font-black; }
+    .stat-card { @apply rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200; }
+    .metric { @apply flex flex-col rounded-xl p-3; }
+    .metric strong { @apply text-3xl font-black; }
+    .metric span { @apply text-xs font-bold uppercase; }
+    .metric.installed { @apply bg-emerald-50 text-emerald-700; }
+    .metric.blocked { @apply bg-amber-50 text-amber-700; }
+    .badge { @apply inline-flex rounded-full px-3 py-1 text-sm font-bold; }
+    .badge.installed { @apply bg-emerald-100 text-emerald-800; }
+    .badge.blocked { @apply bg-amber-100 text-amber-800; }
+}

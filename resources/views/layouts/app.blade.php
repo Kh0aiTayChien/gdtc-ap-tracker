@@ -5,7 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'GDTC AP Tracker')</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @php
+        $manifestPath = public_path('build/manifest.json');
+        $manifest = file_exists($manifestPath) ? json_decode(file_get_contents($manifestPath), true) : [];
+        $cssFile = $manifest['resources/css/app.css']['file'] ?? null;
+        $jsFile = $manifest['resources/js/app.js']['file'] ?? null;
+    @endphp
+    @if ($cssFile && file_exists(public_path('build/'.$cssFile)))
+        <style>{!! file_get_contents(public_path('build/'.$cssFile)) !!}</style>
+    @else
+        @vite(['resources/css/app.css'])
+    @endif
+    @if ($jsFile && file_exists(public_path('build/'.$jsFile)))
+        <script type="module">{!! file_get_contents(public_path('build/'.$jsFile)) !!}</script>
+    @else
+        @vite(['resources/js/app.js'])
+    @endif
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900 antialiased">
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">

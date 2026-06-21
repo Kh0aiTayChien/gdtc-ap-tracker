@@ -6,7 +6,6 @@ use App\Events\ApRecordSaved;
 use App\Models\ApRecord;
 use App\Models\Team;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -36,14 +35,12 @@ class ApTrackerTest extends TestCase
         $this->withSession(['team_id' => $team->id])->get('/t/team-1')->assertRedirect(route('team.records.create', $team));
     }
 
-    public function test_team_creates_installed_ap_with_three_required_photos(): void
+    public function test_team_creates_installed_ap_without_required_photos_and_custom_time(): void
     {
         $team = Team::where('login_slug', 'team-1')->firstOrFail();
         $payload = [
             'floor' => 'T11', 'ap_no' => 2, 'status' => 'installed',
-            'location_photo' => UploadedFile::fake()->image('location.jpg'),
-            'mac_photo' => UploadedFile::fake()->image('mac.jpg'),
-            'cable_photo' => UploadedFile::fake()->image('cable.jpg'),
+            'record_time' => '2026-06-20T09:45',
         ];
 
         $this->withSession(['team_id' => $team->id])->post('/t/team-1/records', $payload)
@@ -53,27 +50,27 @@ class ApTrackerTest extends TestCase
         $record = ApRecord::firstOrFail();
         $this->assertSame('T11-AP2', $record->ap_name);
         $this->assertSame($team->id, $record->team_id);
-        Storage::disk('public')->assertExists('ap-records/T11-AP2-location.jpg');
-        Storage::disk('public')->assertExists('ap-records/T11-AP2-mac-sn.jpg');
-        Storage::disk('public')->assertExists('ap-records/T11-AP2-cable.jpg');
+        $this->assertSame('2026-06-20 09:45', $record->created_at->format('Y-m-d H:i'));
+        $this->assertNull($record->location_photo);
+        $this->assertNull($record->mac_photo);
+        $this->assertNull($record->cable_photo);
         Event::assertDispatched(ApRecordSaved::class);
     }
 
-    public function test_blocked_ap_requires_reason_and_issue_photo(): void
+    public function test_blocked_ap_requires_reason_but_not_issue_photo(): void
     {
         $team = Team::where('login_slug', 'team-2')->firstOrFail();
 
         $this->withSession(['team_id' => $team->id])->post('/t/team-2/records', [
             'floor' => 'G', 'ap_no' => 5, 'status' => 'blocked',
-        ])->assertSessionHasErrors(['issue_reason', 'issue_photo']);
+        ])->assertSessionHasErrors(['issue_reason']);
 
         $this->withSession(['team_id' => $team->id])->post('/t/team-2/records', [
             'floor' => 'G', 'ap_no' => 5, 'status' => 'blocked',
             'issue_reason' => 'Chưa tìm thấy dây',
-            'issue_photo' => UploadedFile::fake()->image('issue.jpg'),
         ])->assertRedirect(route('team.today', $team));
 
-        $this->assertDatabaseHas('ap_records', ['ap_name' => 'G-AP5', 'status' => 'blocked']);
+        $this->assertDatabaseHas('ap_records', ['ap_name' => 'G-AP5', 'status' => 'blocked', 'issue_photo' => null]);
     }
 
     public function test_team_cannot_edit_another_teams_record(): void

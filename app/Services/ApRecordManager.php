@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\ApRecordSaved;
 use App\Models\ApRecord;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -26,10 +27,14 @@ class ApRecordManager
         $oldPaths = [];
 
         DB::transaction(function () use ($record, $validated, $teamId, &$oldPaths): void {
-            $record->fill(Arr::except($validated, array_keys(self::PHOTO_NAMES)));
+            $record->fill(Arr::except($validated, array_merge(array_keys(self::PHOTO_NAMES), ['record_time'])));
 
             if (! $record->exists && $teamId !== null) {
                 $record->team_id = $teamId;
+            }
+
+            if (! empty($validated['record_time'])) {
+                $record->created_at = CarbonImmutable::createFromFormat('Y-m-d\TH:i', $validated['record_time'], config('app.timezone'));
             }
 
             if ($record->status === 'installed') {

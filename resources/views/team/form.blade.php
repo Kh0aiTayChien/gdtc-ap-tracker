@@ -5,6 +5,7 @@
     $floor = old('floor', $record->floor ?: 'G');
     $apNo = old('ap_no', $record->ap_no ?: 1);
     $status = old('status', $record->status ?: 'installed');
+    $recordTime = old('record_time', optional($record->created_at)->format('Y-m-d\TH:i') ?: now()->format('Y-m-d\TH:i'));
 @endphp
 @extends('layouts.app')
 @section('title', ($isEdit ? 'Sửa AP' : 'Thêm AP').' - GDTC')
@@ -32,6 +33,9 @@
             </div>
         </div>
         <div class="mt-5 rounded-2xl bg-blue-50 p-4 text-center text-3xl font-black text-blue-800" x-text="`${floor}-AP${apNo || 1}`"></div>
+        <label class="mt-5 block"><span class="label">Thời gian bản ghi</span>
+            <input class="field" name="record_time" type="datetime-local" value="{{ $recordTime }}">
+        </label>
     </div>
 
     <fieldset class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
@@ -49,12 +53,12 @@
     </fieldset>
 
     <section x-show="status === 'installed'" x-cloak class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-        <h2 class="text-lg font-black">Ảnh nghiệm thu <span class="text-red-600">*</span></h2>
+        <h2 class="text-lg font-black">Ảnh nghiệm thu <span class="text-sm font-bold text-slate-500">(không bắt buộc)</span></h2>
         <div class="mt-4 space-y-5">
             @foreach ([['location_photo','Ảnh vị trí lắp đặt'],['mac_photo','Ảnh tem MAC + Serial'],['cable_photo','Ảnh nhãn dây AP']] as [$field,$label])
                 <label class="photo-field"><span class="label">{{ $label }}</span>
                     @if ($record->{$field})<img class="mb-3 h-40 w-full rounded-xl object-cover" src="{{ Storage::url($record->{$field}) }}" alt="{{ $label }}">@endif
-                    <input name="{{ $field }}" type="file" accept="image/*" capture="environment" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-blue-700 file:px-4 file:py-3 file:font-bold file:text-white" @if(!$isEdit) :required="status === 'installed'" @endif>
+                    <input name="{{ $field }}" type="file" accept="image/*" capture="environment" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-blue-700 file:px-4 file:py-3 file:font-bold file:text-white">
                     @if ($isEdit)<small class="text-slate-500">Không chọn ảnh để giữ ảnh hiện tại.</small>@endif
                 </label>
             @endforeach
@@ -72,9 +76,9 @@
                     @endforeach
                 </select>
             </label>
-            <label class="photo-field"><span class="label">Ảnh hiện trường sự cố <span class="text-red-600">*</span></span>
+            <label class="photo-field"><span class="label">Ảnh hiện trường sự cố <span class="text-sm font-bold text-slate-500">(không bắt buộc)</span></span>
                 @if ($record->issue_photo)<img class="mb-3 h-40 w-full rounded-xl object-cover" src="{{ Storage::url($record->issue_photo) }}" alt="Ảnh sự cố">@endif
-                <input name="issue_photo" type="file" accept="image/*" capture="environment" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-amber-600 file:px-4 file:py-3 file:font-bold file:text-white" @if(!$isEdit) :required="status === 'blocked'" @endif>
+                <input name="issue_photo" type="file" accept="image/*" capture="environment" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-amber-600 file:px-4 file:py-3 file:font-bold file:text-white">
             </label>
             <label class="block"><span class="label">Ghi chú</span><textarea class="field min-h-28" name="issue_note" maxlength="2000" placeholder="Thông tin bổ sung (không bắt buộc)">{{ old('issue_note', $record->issue_note) }}</textarea></label>
         </div>

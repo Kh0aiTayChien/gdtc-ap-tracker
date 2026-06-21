@@ -24,6 +24,7 @@ class SaveApRecordRequest extends FormRequest
                 Rule::unique('ap_records')->where(fn ($query) => $query->where('floor', $this->input('floor')))->ignore($record?->id),
             ],
             'status' => ['required', Rule::in(['installed', 'blocked'])],
+            'work_date' => ['required', 'date'],
             'record_time' => ['nullable', 'date_format:Y-m-d\TH:i'],
             'location_photo' => ['nullable', 'image', 'max:12288'],
             'mac_photo' => ['nullable', 'image', 'max:12288'],

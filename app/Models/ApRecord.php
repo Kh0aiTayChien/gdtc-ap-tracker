@@ -8,10 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ApRecord extends Model
 {
     protected $fillable = [
-        'team_id', 'floor', 'ap_no', 'ap_name', 'status',
+        'team_id', 'floor', 'ap_no', 'ap_name', 'status', 'work_date',
         'location_photo', 'mac_photo', 'cable_photo',
         'issue_reason', 'issue_note', 'issue_photo',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'work_date' => 'date',
+        ];
+    }
 
     protected static function booted(): void
     {

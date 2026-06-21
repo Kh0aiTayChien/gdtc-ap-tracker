@@ -37,15 +37,21 @@ class AdminController extends Controller
 
     public function dashboard(): View
     {
+        $summary = ApRecord::query()->selectRaw("COUNT(*) total, SUM(CASE WHEN status = 'installed' THEN 1 ELSE 0 END) installed, SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) blocked")
+            ->first();
         $byFloor = ApRecord::query()->selectRaw("floor, SUM(CASE WHEN status = 'installed' THEN 1 ELSE 0 END) installed, SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) blocked, COUNT(*) total")
             ->groupBy('floor')->orderBy('floor')->get();
+        $byWorkDate = ApRecord::query()
+            ->whereNotNull('work_date')
+            ->selectRaw("work_date, SUM(CASE WHEN status = 'installed' THEN 1 ELSE 0 END) installed, SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) blocked, COUNT(*) total")
+            ->groupBy('work_date')->orderByDesc('work_date')->limit(14)->get();
         $byTeam = Team::query()->withCount([
             'records as installed' => fn (Builder $q) => $q->where('status', 'installed'),
             'records as blocked' => fn (Builder $q) => $q->where('status', 'blocked'),
         ])->get();
         $latest = ApRecord::query()->with('team')->latest()->limit(15)->get();
 
-        return view('admin.dashboard', compact('byFloor', 'byTeam', 'latest'));
+        return view('admin.dashboard', compact('summary', 'byFloor', 'byWorkDate', 'byTeam', 'latest'));
     }
 
     public function records(Request $request): View
@@ -88,9 +94,9 @@ class AdminController extends Controller
 
         return response()->streamDownload(function () use ($records): void {
             $out = fopen('php://output', 'wb');
-            fputcsv($out, ['id', 'team', 'floor', 'ap_no', 'ap_name', 'status', 'issue_reason', 'issue_note', 'location_photo', 'mac_photo', 'cable_photo', 'issue_photo', 'created_at', 'updated_at']);
+            fputcsv($out, ['id', 'team', 'floor', 'ap_no', 'ap_name', 'status', 'work_date', 'issue_reason', 'issue_note', 'location_photo', 'mac_photo', 'cable_photo', 'issue_photo', 'created_at', 'updated_at']);
             foreach ($records as $record) {
-                fputcsv($out, [$record->id, $record->team?->name, $record->floor, $record->ap_no, $record->ap_name, $record->status, $record->issue_reason, $record->issue_note, $record->location_photo, $record->mac_photo, $record->cable_photo, $record->issue_photo, $record->created_at, $record->updated_at]);
+                fputcsv($out, [$record->id, $record->team?->name, $record->floor, $record->ap_no, $record->ap_name, $record->status, $record->work_date?->format('Y-m-d'), $record->issue_reason, $record->issue_note, $record->location_photo, $record->mac_photo, $record->cable_photo, $record->issue_photo, $record->created_at, $record->updated_at]);
             }
             fclose($out);
         }, 'ap-records-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
@@ -99,7 +105,7 @@ class AdminController extends Controller
     private function filtered(Request $request): Builder
     {
         return ApRecord::query()
-            ->when($request->date, fn (Builder $q, $date) => $q->whereDate('created_at', $date))
+            ->when($request->date, fn (Builder $q, $date) => $q->whereDate('work_date', $date))
             ->when($request->floor, fn (Builder $q, $floor) => $q->where('floor', $floor))
             ->when($request->team, fn (Builder $q, $team) => $q->where('team_id', $team))
             ->when($request->status, fn (Builder $q, $status) => $q->where('status', $status))

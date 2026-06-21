@@ -5,6 +5,7 @@
     $floor = old('floor', $record->floor ?: 'G');
     $apNo = old('ap_no', $record->ap_no ?: 1);
     $status = old('status', $record->status ?: 'installed');
+    $workDate = old('work_date', optional($record->work_date)->format('Y-m-d') ?: now()->format('Y-m-d'));
     $recordTime = old('record_time', optional($record->created_at)->format('Y-m-d\TH:i') ?: now()->format('Y-m-d\TH:i'));
 @endphp
 @extends('layouts.app')
@@ -33,9 +34,14 @@
             </div>
         </div>
         <div class="mt-5 rounded-2xl bg-blue-50 p-4 text-center text-3xl font-black text-blue-800" x-text="`${floor}-AP${apNo || 1}`"></div>
-        <label class="mt-5 block"><span class="label">Thời gian bản ghi</span>
-            <input class="field" name="record_time" type="datetime-local" value="{{ $recordTime }}">
-        </label>
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+            <label class="block"><span class="label">Ngày thi công</span>
+                <input class="field" name="work_date" type="date" value="{{ $workDate }}" required>
+            </label>
+            <label class="block"><span class="label">Thời gian tạo bản ghi</span>
+                <input class="field" name="record_time" type="datetime-local" value="{{ $recordTime }}">
+            </label>
+        </div>
     </div>
 
     <fieldset class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">

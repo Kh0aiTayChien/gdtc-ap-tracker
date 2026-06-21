@@ -40,6 +40,7 @@ class ApTrackerTest extends TestCase
         $team = Team::where('login_slug', 'team-1')->firstOrFail();
         $payload = [
             'floor' => 'T11', 'ap_no' => 2, 'status' => 'installed',
+            'work_date' => '2026-06-19',
             'record_time' => '2026-06-20T09:45',
         ];
 
@@ -50,6 +51,7 @@ class ApTrackerTest extends TestCase
         $record = ApRecord::firstOrFail();
         $this->assertSame('T11-AP2', $record->ap_name);
         $this->assertSame($team->id, $record->team_id);
+        $this->assertSame('2026-06-19', $record->work_date->format('Y-m-d'));
         $this->assertSame('2026-06-20 09:45', $record->created_at->format('Y-m-d H:i'));
         $this->assertNull($record->location_photo);
         $this->assertNull($record->mac_photo);
@@ -63,21 +65,32 @@ class ApTrackerTest extends TestCase
 
         $this->withSession(['team_id' => $team->id])->post('/t/team-2/records', [
             'floor' => 'G', 'ap_no' => 5, 'status' => 'blocked',
+            'work_date' => '2026-06-20',
         ])->assertSessionHasErrors(['issue_reason']);
 
         $this->withSession(['team_id' => $team->id])->post('/t/team-2/records', [
             'floor' => 'G', 'ap_no' => 5, 'status' => 'blocked',
+            'work_date' => '2026-06-20',
             'issue_reason' => 'Chưa tìm thấy dây',
         ])->assertRedirect(route('team.today', $team));
 
         $this->assertDatabaseHas('ap_records', ['ap_name' => 'G-AP5', 'status' => 'blocked', 'issue_photo' => null]);
     }
 
+    public function test_work_date_is_required(): void
+    {
+        $team = Team::where('login_slug', 'team-1')->firstOrFail();
+
+        $this->withSession(['team_id' => $team->id])->post('/t/team-1/records', [
+            'floor' => 'T8', 'ap_no' => 2, 'status' => 'installed',
+        ])->assertSessionHasErrors(['work_date']);
+    }
+
     public function test_team_cannot_edit_another_teams_record(): void
     {
         $team1 = Team::where('login_slug', 'team-1')->firstOrFail();
         $team2 = Team::where('login_slug', 'team-2')->firstOrFail();
-        $record = ApRecord::create(['team_id' => $team2->id, 'floor' => 'T1', 'ap_no' => 1, 'status' => 'blocked', 'issue_reason' => 'Khác']);
+        $record = ApRecord::create(['team_id' => $team2->id, 'floor' => 'T1', 'ap_no' => 1, 'status' => 'blocked', 'work_date' => '2026-06-20', 'issue_reason' => 'Khác']);
 
         $this->withSession(['team_id' => $team1->id])->get(route('team.records.edit', [$team1, $record]))->assertNotFound();
     }

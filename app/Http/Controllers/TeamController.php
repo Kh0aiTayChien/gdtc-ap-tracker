@@ -6,6 +6,7 @@ use App\Http\Requests\SaveApRecordRequest;
 use App\Models\ApRecord;
 use App\Models\Team;
 use App\Services\ApRecordManager;
+use App\Services\FloorProgressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -35,9 +36,17 @@ class TeamController extends Controller
         return redirect()->route('team.records.create', $team);
     }
 
-    public function create(Team $team): View
+    public function logout(Request $request, Team $team): RedirectResponse
     {
-        return view('team.form', ['team' => $team, 'record' => new ApRecord]);
+        $request->session()->forget('team_id');
+        $request->session()->regenerateToken();
+
+        return redirect()->route('team.home', $team);
+    }
+
+    public function create(Team $team, FloorProgressService $progress): View
+    {
+        return view('team.form', ['team' => $team, 'record' => new ApRecord, 'floorOptions' => $progress->floorOptions()]);
     }
 
     public function store(SaveApRecordRequest $request, Team $team, ApRecordManager $manager): RedirectResponse
@@ -54,11 +63,21 @@ class TeamController extends Controller
         return view('team.today', compact('team', 'records'));
     }
 
-    public function edit(Team $team, ApRecord $record): View
+    public function floors(Team $team, FloorProgressService $progress): View
+    {
+        return view('shared.floors', [
+            'title' => 'Tổng hợp theo tầng',
+            'backUrl' => route('team.today', $team),
+            'backLabel' => 'Hôm nay',
+            ...$progress->summary(),
+        ]);
+    }
+
+    public function edit(Team $team, ApRecord $record, FloorProgressService $progress): View
     {
         $this->assertOwnership($team, $record);
 
-        return view('team.form', compact('team', 'record'));
+        return view('team.form', ['team' => $team, 'record' => $record, 'floorOptions' => $progress->floorOptions()]);
     }
 
     public function update(SaveApRecordRequest $request, Team $team, ApRecord $record, ApRecordManager $manager): RedirectResponse
@@ -73,4 +92,5 @@ class TeamController extends Controller
     {
         abort_unless((int) $record->team_id === $team->id, 404);
     }
+
 }

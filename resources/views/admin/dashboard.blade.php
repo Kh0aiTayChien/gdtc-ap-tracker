@@ -6,12 +6,34 @@
 <div data-admin-dashboard>
     <div id="realtime-feed" class="mb-6 space-y-2"></div>
     <h1 class="text-3xl font-black">Tiến độ thi công</h1>
-    <p class="mt-1 text-slate-500">Số liệu cập nhật theo bản ghi hiện tại.</p>
+    <p class="mt-1 text-slate-500">Số liệu cập nhật theo cấu hình tổng AP của từng tầng.</p>
 
-    <section class="mt-7 grid gap-3 sm:grid-cols-3">
-        <article class="stat-card"><div class="text-sm font-bold text-slate-500">Tổng số AP</div><div class="mt-2 text-4xl font-black text-blue-800">{{ $summary->total ?? 0 }}</div></article>
+    <section class="mt-7 grid gap-3 sm:grid-cols-4">
+        <article class="stat-card progress-glow"><div class="text-sm font-bold text-slate-500">Tổng AP mục tiêu</div><div class="mt-2 text-4xl font-black text-blue-800">{{ $configuredApTotal }}</div></article>
         <article class="stat-card"><div class="text-sm font-bold text-emerald-700">Tổng đã lắp</div><div class="mt-2 text-4xl font-black text-emerald-700">{{ $summary->installed ?? 0 }}</div></article>
         <article class="stat-card"><div class="text-sm font-bold text-amber-700">Cần xử lý</div><div class="mt-2 text-4xl font-black text-amber-700">{{ $summary->blocked ?? 0 }}</div></article>
+        <article class="stat-card">
+            <div class="text-sm font-bold text-slate-500">Hoàn thành</div>
+            <div class="mt-2 text-4xl font-black text-blue-800">{{ $overallPercent }}%</div>
+            <div class="progress-track mt-4"><div class="progress-fill" style="width: {{ min(100, $overallPercent) }}%"></div></div>
+        </article>
+    </section>
+
+    <section class="mt-7"><h2 class="section-title">Theo tuần</h2>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            @forelse ($weeklyProgress as $week)
+                <article class="stat-card progress-card">
+                    <div class="text-sm font-bold text-slate-500">{{ \Illuminate\Support\Carbon::parse($week->week_start)->format('d/m') }} - {{ \Illuminate\Support\Carbon::parse($week->week_end)->format('d/m') }}</div>
+                    <div class="mt-2 flex items-end justify-between gap-3">
+                        <div><div class="text-3xl font-black text-blue-800">{{ $week->percent }}%</div><div class="text-xs font-bold uppercase text-slate-500">của mục tiêu</div></div>
+                        <div class="text-right text-sm font-bold text-slate-600">{{ $week->installed }} đã lắp<br>{{ $week->blocked }} sự cố</div>
+                    </div>
+                    <div class="progress-track mt-4"><div class="progress-fill" style="width: {{ min(100, $week->percent) }}%"></div></div>
+                </article>
+            @empty
+                <div class="rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center text-slate-500 sm:col-span-2 lg:col-span-4">Chưa có dữ liệu theo tuần.</div>
+            @endforelse
+        </div>
     </section>
 
     <section class="mt-7"><h2 class="section-title">Theo ngày thi công</h2>
@@ -39,8 +61,12 @@
 
     <section class="mt-7"><h2 class="section-title">Theo tầng</h2>
         <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            @forelse ($byFloor as $floor)
-                <article class="stat-card"><div class="flex items-center justify-between"><h3 class="text-2xl font-black text-blue-800">{{ $floor->floor }}</h3><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">{{ $floor->total }} AP</span></div><div class="mt-4 flex justify-between text-sm"><span class="font-bold text-emerald-700">Đã lắp: {{ $floor->installed }}</span><span class="font-bold text-amber-700">Sự cố: {{ $floor->blocked }}</span></div></article>
+            @forelse ($floorProgress as $floor)
+                <article class="stat-card progress-card">
+                    <div class="flex items-center justify-between"><h3 class="text-2xl font-black text-blue-800">{{ $floor->floor }}</h3><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold">{{ $floor->installed }}/{{ $floor->total }} AP</span></div>
+                    <div class="progress-track mt-4"><div class="progress-fill" style="width: {{ min(100, $floor->percent) }}%"></div></div>
+                    <div class="mt-3 flex justify-between text-sm"><span class="font-bold text-emerald-700">{{ $floor->percent }}%</span><span class="font-bold text-slate-500">Còn {{ $floor->remaining }}</span></div>
+                </article>
             @empty <div class="text-slate-500">Chưa có dữ liệu.</div> @endforelse
         </div>
     </section>

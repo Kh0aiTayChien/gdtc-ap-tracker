@@ -54,7 +54,8 @@ class ApRecordManager
             foreach (self::PHOTO_NAMES as $field => $suffix) {
                 if (($validated[$field] ?? null) instanceof UploadedFile) {
                     $oldPaths[] = $record->{$field};
-                    $filename = "{$record->ap_name}-{$suffix}.jpg";
+                    $extension = $validated[$field]->guessExtension() ?: $validated[$field]->getClientOriginalExtension() ?: 'jpg';
+                    $filename = "{$record->ap_name}-{$suffix}.{$extension}";
                     $record->{$field} = $validated[$field]->storeAs('ap-records', $filename, 'public');
                 }
             }

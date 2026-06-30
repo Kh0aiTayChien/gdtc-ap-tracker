@@ -7,11 +7,19 @@
     $status = old('status', $record->status ?: 'installed');
     $workDate = old('work_date', optional($record->work_date)->format('Y-m-d') ?: now()->format('Y-m-d'));
     $recordTime = old('record_time', optional($record->created_at)->format('Y-m-d\TH:i') ?: now()->format('Y-m-d\TH:i'));
+    $floorOptions = collect($floorOptions ?? ['G', ...array_map(fn ($n) => "T{$n}", range(1, 24))])->merge([$floor])->unique()->values();
 @endphp
 @extends('layouts.app')
 @section('title', ($isEdit ? 'Sửa AP' : 'Thêm AP').' - GDTC')
 @section('header-actions')
-    <a class="btn-ghost !min-h-0 !px-3 !py-2 text-sm" href="{{ $isAdmin ? route('admin.records.index') : route('team.today', $team) }}">Danh sách</a>
+    <div class="flex gap-2">
+        <a class="btn-ghost !min-h-0 !px-3 !py-2 text-sm" href="{{ $isAdmin ? route('admin.floors') : route('team.floors', $team) }}">Theo tầng</a>
+        <a class="btn-ghost !min-h-0 !px-3 !py-2 text-sm" href="{{ $isAdmin ? route('admin.records.index') : route('team.today', $team) }}">Danh sách</a>
+        <form method="POST" action="{{ $isAdmin ? route('admin.logout') : route('team.logout', $team) }}">
+            @csrf
+            <button class="btn-danger !min-h-0 !px-3 !py-2 text-sm" type="submit">Thoát</button>
+        </form>
+    </div>
 @endsection
 @section('content')
 <form method="POST" action="{{ $action }}" enctype="multipart/form-data" x-data="apForm(@js($floor), @js((int) $apNo), @js($status))" class="mx-auto max-w-2xl space-y-5">
@@ -21,8 +29,7 @@
         <div class="grid grid-cols-2 gap-3">
             <label class="block"><span class="label">Tầng</span>
                 <select class="field text-lg font-bold" name="floor" x-model="floor">
-                    <option value="G">G</option>
-                    @foreach (range(1, 24) as $n)<option value="T{{ $n }}">T{{ $n }}</option>@endforeach
+                    @foreach ($floorOptions as $option)<option value="{{ $option }}">{{ $option }}</option>@endforeach
                 </select>
             </label>
             <div><span class="label">Số AP</span>
@@ -64,7 +71,7 @@
             @foreach ([['location_photo','Ảnh vị trí lắp đặt'],['mac_photo','Ảnh tem MAC + Serial'],['cable_photo','Ảnh nhãn dây AP']] as [$field,$label])
                 <label class="photo-field"><span class="label">{{ $label }}</span>
                     @if ($record->{$field})<img class="mb-3 h-40 w-full rounded-xl object-cover" src="{{ Storage::url($record->{$field}) }}" alt="{{ $label }}">@endif
-                    <input name="{{ $field }}" type="file" accept="image/*" capture="environment" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-blue-700 file:px-4 file:py-3 file:font-bold file:text-white">
+                    <input name="{{ $field }}" type="file" accept="image/*,.heic,.heif" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-blue-700 file:px-4 file:py-3 file:font-bold file:text-white">
                     @if ($isEdit)<small class="text-slate-500">Không chọn ảnh để giữ ảnh hiện tại.</small>@endif
                 </label>
             @endforeach
@@ -84,7 +91,7 @@
             </label>
             <label class="photo-field"><span class="label">Ảnh hiện trường sự cố <span class="text-sm font-bold text-slate-500">(không bắt buộc)</span></span>
                 @if ($record->issue_photo)<img class="mb-3 h-40 w-full rounded-xl object-cover" src="{{ Storage::url($record->issue_photo) }}" alt="Ảnh sự cố">@endif
-                <input name="issue_photo" type="file" accept="image/*" capture="environment" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-amber-600 file:px-4 file:py-3 file:font-bold file:text-white">
+                <input name="issue_photo" type="file" accept="image/*,.heic,.heif" class="block w-full text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-amber-600 file:px-4 file:py-3 file:font-bold file:text-white">
             </label>
             <label class="block"><span class="label">Ghi chú</span><textarea class="field min-h-28" name="issue_note" maxlength="2000" placeholder="Thông tin bổ sung (không bắt buộc)">{{ old('issue_note', $record->issue_note) }}</textarea></label>
         </div>

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Team;
+use App\Models\FloorConfig;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -21,6 +22,13 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Tổ 3', 'login_slug' => 'team-3', 'access_code' => 'vnpt3'],
         ] as $team) {
             Team::query()->updateOrCreate(['login_slug' => $team['login_slug']], $team);
+        }
+
+        foreach (['G', ...array_map(fn (int $n) => "T{$n}", range(1, 24))] as $floor) {
+            FloorConfig::query()->firstOrCreate(
+                ['floor' => $floor],
+                ['target_ap_count' => 0, 'sort_order' => FloorConfig::sortValue($floor)]
+            );
         }
     }
 }

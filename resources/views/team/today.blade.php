@@ -1,6 +1,15 @@
 @extends('layouts.app')
 @section('title', 'Hôm nay - '.$team->name)
-@section('header-actions')<a class="btn-primary !min-h-0 !px-3 !py-2 text-sm" href="{{ route('team.records.create', $team) }}">+ Thêm AP</a>@endsection
+@section('header-actions')
+    <div class="flex gap-2">
+        <a class="btn-ghost !min-h-0 !px-3 !py-2 text-sm" href="{{ route('team.floors', $team) }}">Theo tầng</a>
+        <a class="btn-primary !min-h-0 !px-3 !py-2 text-sm" href="{{ route('team.records.create', $team) }}">+ Thêm AP</a>
+        <form method="POST" action="{{ route('team.logout', $team) }}">
+            @csrf
+            <button class="btn-danger !min-h-0 !px-3 !py-2 text-sm" type="submit">Thoát</button>
+        </form>
+    </div>
+@endsection
 @section('content')
 <div class="mx-auto max-w-2xl">
     <div class="mb-5 flex items-end justify-between"><div><div class="text-sm font-bold text-blue-700">{{ $team->name }}</div><h1 class="text-3xl font-black">Hôm nay</h1></div><div class="text-sm text-slate-500">{{ now()->format('d/m/Y') }}</div></div>
